@@ -11,19 +11,21 @@ default_args = {
     "depends_on_past": False,
     "email_on_failure": False,
     "email_on_retry": False,
-    "retries": 1,
+    "retries": 0,
     "retry_delay": timedelta(minutes=5),
 }
 
 # Função de limpeza e transformação
 def clean_and_transform_data(**kwargs):
     # Carregar os dados do XCom ou de um arquivo
-    raw_data = kwargs['ti'].xcom_pull(task_ids='download_report', key='dsp_report_data')
-    
-    print(raw_data)
+    raw_data = Variable.get("dsp_report_data")
+
+    data = json.loads(raw_data)
+
+    print(data)
 
     # Criar o DataFrame
-    df = pd.DataFrame(raw_data)
+    df = pd.DataFrame(data)
 
     # Converter timestamps para datas legíveis
     df["date"] = pd.to_datetime(df["date"], unit='ms')
@@ -43,7 +45,7 @@ def clean_and_transform_data(**kwargs):
     }
     df = df.rename(columns=selected_columns)[selected_columns.values()]
 
-    df.head(5)
+    print(df.head(5))
 
 # Configuração da DAG
 with DAG(

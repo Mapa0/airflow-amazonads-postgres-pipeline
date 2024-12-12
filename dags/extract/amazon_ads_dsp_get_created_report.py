@@ -24,8 +24,7 @@ def download_report(**kwargs):
     response = requests.get(report_location)
     if response.status_code == 200:
         report_data = response.json()
-        print(report_data)
-        kwargs['ti'].xcom_push(key='dsp_report_data', value=report_data)
+        Variable.set("dsp_report_data", json.dumps(report_data))
         print("Dados do relatório baixados com sucesso.")
     else:
         raise Exception(f"Erro ao baixar relatório: {response.status_code} - {response.text}")
