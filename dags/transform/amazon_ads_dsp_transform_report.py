@@ -31,17 +31,37 @@ def clean_and_transform_data(**kwargs):
     df["date"] = pd.to_datetime(df["date"], unit='ms')
     df["orderStartDate"] = pd.to_datetime(df["orderStartDate"], unit='ms')
     df["orderEndDate"] = pd.to_datetime(df["orderEndDate"], unit='ms')
+    df["lineItemStartDate"] = pd.to_datetime(df["lineItemStartDate"], unit='ms')
+    df["lineItemEndDate"] = pd.to_datetime(df["lineItemEndDate"], unit='ms')
 
     # Selecionar e renomear colunas de interesse
     selected_columns = {
         "date": "Report Date",
-        "orderName": "Order Name",
-        "lineItemName": "Line Item Name",
+        "advertiserId": "Advertiser Id",
         "advertiserName": "Advertiser Name",
+        "orderId": "Campaign Id",
+        "orderName": "Campaign",
+        "orderBudget": "Campaign Budget",
+        "orderStartDate": "Campaign Start Date",
+        "orderEndDate": "Campaign End Date",
+        "lineItemId": "Line Item Id",
+        "lineItemName": "Line Item Name",
+        "lineItemStartDate": "Line Item Start Date",
+        "lineItemEndDate": "Line Item End Date",
+        "lineItemBudget": "Line Item Budget"
+        "creativeID": "Creative Id",
+        "creativeName": "Creative Name",
+        "creativeType": "Creative Type",
+        "totalCost": "Cost",
         "impressions": "Impressions",
         "clickThroughs": "Clicks",
+        "totalPurchases14d": "Purchases (14 Days)",
+        "totalUnitsSold14d": "Units Sold (14 Days)",
+        "totalNewToBrandUnitsSold14d": "New To Brand Units Sold (14 Days)",
         "sales14d": "Sales (14 Days)",
+        "totalSubscribeAndSaveSubscriptions14d": "Subscribe and Save Subscriptions (14 Days)",
         "totalDetailPageViews14d": "Detail Page Views (14 Days)",
+        "totalAddToCart14d": "Add To Cart (14 Days)"
     }
     df = df.rename(columns=selected_columns)[selected_columns.values()]
 
