@@ -26,42 +26,44 @@ def clean_and_transform_data(**kwargs):
     df = pd.DataFrame(data)
 
     # Converter timestamps para datas legíveis
-    df["date"] = pd.to_datetime(df["date"], unit='ms')
-    df["orderStartDate"] = pd.to_datetime(df["orderStartDate"], unit='ms')
-    df["orderEndDate"] = pd.to_datetime(df["orderEndDate"], unit='ms')
-    df["lineItemStartDate"] = pd.to_datetime(df["lineItemStartDate"], unit='ms')
-    df["lineItemEndDate"] = pd.to_datetime(df["lineItemEndDate"], unit='ms')
+    df["date"] = pd.to_datetime(df["date"], unit="ms").dt.date
+    df["orderStartDate"] = pd.to_datetime(df["orderStartDate"], unit="ms").dt.date
+    df["orderEndDate"] = pd.to_datetime(df["orderEndDate"], unit="ms").dt.date
+    df["lineItemStartDate"] = pd.to_datetime(df["lineItemStartDate"], unit="ms").dt.date
+    df["lineItemEndDate"] = pd.to_datetime(df["lineItemEndDate"], unit="ms").dt.date
 
     # Selecionar e renomear colunas de interesse
     selected_columns = {
-        "date": "Report Date",
-        "advertiserId": "Advertiser Id",
-        "advertiserName": "Advertiser Name",
-        "orderId": "Campaign Id",
-        "orderName": "Campaign",
-        "orderBudget": "Campaign Budget",
-        "orderStartDate": "Campaign Start Date",
-        "orderEndDate": "Campaign End Date",
-        "lineItemId": "Line Item Id",
-        "lineItemName": "Line Item Name",
-        "lineItemStartDate": "Line Item Start Date",
-        "lineItemEndDate": "Line Item End Date",
-        "lineItemBudget": "Line Item Budget",
-        "creativeID": "Creative Id",
-        "creativeName": "Creative Name",
-        "creativeType": "Creative Type",
-        "totalCost": "Cost",
-        "impressions": "Impressions",
-        "clickThroughs": "Clicks",
-        "totalPurchases14d": "Purchases (14 Days)",
-        "totalUnitsSold14d": "Units Sold (14 Days)",
-        "totalNewToBrandUnitsSold14d": "New To Brand Units Sold (14 Days)",
-        "sales14d": "Sales (14 Days)",
-        "totalSubscribeAndSaveSubscriptions14d": "Subscribe and Save Subscriptions (14 Days)",
-        "totalDetailPageViews14d": "Detail Page Views (14 Days)",
-        "totalAddToCart14d": "Add To Cart (14 Days)"
+        "date": "date",
+        "advertiserId": "advertiserId",
+        "advertiserName": "advertiserName",
+        "orderId": "campaignId",
+        "orderName": "campaign",
+        "orderBudget": "campaignBudget",
+        "orderStartDate": "campaignStartDate",
+        "orderEndDate": "campaignEndDate",
+        "lineItemId": "lineItemId",
+        "lineItemName": "lineItemName",
+        "lineItemStartDate": "lineItemStartDate",
+        "lineItemEndDate": "lineItemEndDate",
+        "lineItemBudget": "lineItemBudget",
+        "creativeID": "creativeId",
+        "creativeName": "creativeNameCreative Name",
+        "creativeType": "creativeType",
+        "totalCost": "totalCost",
+        "impressions": "impressions",
+        "clickThroughs": "clicks",
+        "totalPurchases14d": "totalPurchases14d",
+        "totalUnitsSold14d": "totalUnitsSold14d",
+        "totalNewToBrandUnitsSold14d": "totalNewToBrandUnitsSold14d",
+        "sales14d": "sales14d",
+        "totalSubscribeAndSaveSubscriptions14d": "totalSubscribeAndSaveSubscriptions14d",
+        "totalDetailPageViews14d": "totalDetailPageViews14d",
+        "totalAddToCart14d": "totalAddToCart14d"
     }
     df = df.rename(columns=selected_columns)[selected_columns.values()]
+    df_json = df.to_json(orient='records')  # Orientação 'records' garante uma lista de dicionários
+    Variable.set("dsp_report_df", df_json)
 
 # Configuração da DAG
 with DAG(
