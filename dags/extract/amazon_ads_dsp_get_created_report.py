@@ -46,8 +46,8 @@ def check_report_status(**kwargs):
 
     status_endpoint = f"{DSP_REPORT_ENDPOINT}/{report_id}"
 
-    max_retries = 5  # Número máximo de tentativas
-    wait_time = 60   # Tempo de espera entre as tentativas (em segundos)
+    max_retries = 20  # Número máximo de tentativas
+    wait_time = 180   # Tempo de espera entre as tentativas (em segundos)
 
     for attempt in range(max_retries):
         response = requests.get(status_endpoint, headers=headers)
