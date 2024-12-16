@@ -22,8 +22,6 @@ def clean_and_transform_data(**kwargs):
 
     data = json.loads(raw_data)
 
-    print(data)
-
     # Criar o DataFrame
     df = pd.DataFrame(data)
 
@@ -48,7 +46,7 @@ def clean_and_transform_data(**kwargs):
         "lineItemName": "Line Item Name",
         "lineItemStartDate": "Line Item Start Date",
         "lineItemEndDate": "Line Item End Date",
-        "lineItemBudget": "Line Item Budget"
+        "lineItemBudget": "Line Item Budget",
         "creativeID": "Creative Id",
         "creativeName": "Creative Name",
         "creativeType": "Creative Type",
@@ -64,8 +62,6 @@ def clean_and_transform_data(**kwargs):
         "totalAddToCart14d": "Add To Cart (14 Days)"
     }
     df = df.rename(columns=selected_columns)[selected_columns.values()]
-
-    print(df.head(5))
 
 # Configuração da DAG
 with DAG(
