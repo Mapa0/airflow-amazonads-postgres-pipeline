@@ -1,19 +1,14 @@
 from airflow import DAG
-from airflow.operators.python import PythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-from airflow.models import Variable
 from datetime import datetime, timedelta
-import requests
-import json
-import os
 
 default_args = {
     "owner": "airflow",
     "depends_on_past": False,
     "email_on_failure": False,
     "email_on_retry": False,
-    "retries": 0,
-    "retry_delay": timedelta(minutes=5),
+    "retries": 3,
+    "retry_delay": timedelta(minutes=60),
 }
 
 with DAG(
