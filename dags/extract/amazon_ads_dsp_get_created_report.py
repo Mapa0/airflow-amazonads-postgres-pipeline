@@ -16,7 +16,9 @@ ACCESS_TOKEN = Variable.get("amazon_access_token")
 
 def download_report(**kwargs):
     report_metadata = Variable.get("dsp_report_metadata", default_var=None)
-    report_location = report_metadata['location']
+    if not report_metadata:
+        raise Exception("Report Metadata invalid")
+    report_location = json.loads(report_metadata)['location']
     if not report_location:
         raise Exception("URL do relatório não encontrada nos XComs.")
     response = requests.get(report_location)
