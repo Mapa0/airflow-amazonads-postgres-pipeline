@@ -8,16 +8,14 @@ import requests
 import json
 import os
 
-# Variáveis de ambiente e configuração
 API_URL = os.getenv("AMAZON_ADS_API_URL")
 AMAZON_ADS_DSP_ACCOUNT_ID = os.getenv("AMAZON_ADS_DSP_ACCOUNT_ID")
 DSP_REPORT_ENDPOINT = f"{API_URL}/accounts/{AMAZON_ADS_DSP_ACCOUNT_ID}/dsp/reports"
 
-# Carregar o token armazenado no Airflow
 ACCESS_TOKEN = Variable.get("amazon_access_token")
 
 def download_report(**kwargs):
-    report_metadata = kwargs['ti'].xcom_pull(task_ids='get_dsp_report', key='dsp_report_metadata')
+    report_metadata = Variable.get("dsp_report_metadata", default_var=None)
     report_location = report_metadata['location']
     if not report_location:
         raise Exception("URL do relatório não encontrada nos XComs.")
@@ -30,12 +28,9 @@ def download_report(**kwargs):
         raise Exception(f"Erro ao baixar relatório: {response.status_code} - {response.text}")
 
 def check_report_status(**kwargs):
-    report_id = kwargs['ti'].xcom_pull(task_ids='get_dsp_report', key='report_id')
-    if not report_id:
-        report_id = Variable.get("amazon_dsp_report_id", default_var=None)
-        print("Report Id não encontrado nos XComs, usando o da variável. report_id: ", report_id)
-        if not report_id: 
-            raise Exception("Report ID não encontrado nos XComs nem nas variáveis.")
+    report_id = Variable.get("amazon_dsp_report_id", default_var=None)
+    if not report_id: 
+        raise Exception("Report ID não encontrado nas variáveis.")
 
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
@@ -56,14 +51,13 @@ def check_report_status(**kwargs):
             report_data = response.json()
             status = report_data.get("status")
             if status == "SUCCESS":
-                # Salvar dados do relatório nos XComs
-                kwargs['ti'].xcom_push(key='dsp_report_metadata', value=report_data)
+                Variable.set("dsp_report_metadata", json.dumps(report_data))
                 print("Relatório concluído com sucesso.")
-                return  # Sai da função após a conclusão
+                return
             elif status == "IN_PROGRESS":
                 print(f"Tentativa {attempt + 1}/{max_retries}: Relatório ainda em progresso.")
                 if attempt < max_retries - 1:
-                    time.sleep(wait_time)  # Espera antes de tentar novamente
+                    time.sleep(wait_time)
             else:
                 raise Exception(f"Erro desconhecido no status do relatório: {status}")
         else:
@@ -72,7 +66,6 @@ def check_report_status(**kwargs):
     raise Exception("Relatório não foi concluído dentro do número máximo de tentativas.")
 
 
-# Configuração da DAG
 default_args = {
     "owner": "airflow",
     "depends_on_past": False,
@@ -86,7 +79,7 @@ with DAG(
     "amazon_ads_dsp_get_created_report",
     default_args=default_args,
     description="DAG para obtenção do report DSP criado no Amazon Ads",
-    schedule_interval=None,  # Esta DAG é acionada manualmente ou por outra DAG
+    schedule_interval=None,
     start_date=datetime(2023, 1, 1),
     catchup=False,
 ) as dag:
@@ -103,11 +96,4 @@ with DAG(
         provide_context=True,
     )
 
-    transform_report_task = TriggerDagRunOperator(
-        task_id="trigger_transform_dsp_report",
-        trigger_dag_id="clean_transform_dsp_data",  # Nome da DAG que obtém o relatório
-        conf={"message": "Solicitação de criação do relatório enviada. Iniciando processo de obtenção do relatório."},  # Mensagem opcional
-        wait_for_completion=True,  # Espera a DAG alvo terminar para continuar
-    )
-
-    get_dsp_report_task >> download_dsp_report_task >> transform_report_task
+    get_dsp_report_task >> download_dsp_report_task

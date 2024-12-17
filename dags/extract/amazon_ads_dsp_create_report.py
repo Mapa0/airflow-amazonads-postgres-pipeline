@@ -1,10 +1,8 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.models import Variable
 from datetime import datetime, timedelta
 import requests
-import json
 import os
 
 # Variáveis de ambiente e configuração
@@ -16,9 +14,11 @@ DSP_REPORT_ENDPOINT = f"{API_URL}/accounts/{AMAZON_ADS_DSP_ACCOUNT_ID}/dsp/repor
 ACCESS_TOKEN = Variable.get("amazon_access_token")
 
 # Função de extração de dados
-import time
-
 def create_dsp_report(**kwargs):
+    # Calcular o período (dia anterior)
+    end_date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+    start_date = end_date  # Apenas para o dia anterior
+
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
         "Content-Type": "application/json",
@@ -27,13 +27,12 @@ def create_dsp_report(**kwargs):
     }
 
     payload = {
-        "startDate": "2024-11-21",
-        "endDate": "2024-11-27",
+        "startDate": start_date,
+        "endDate": end_date,
         "type": "CAMPAIGN",
         "dimensions": [
             "ORDER",
-            "LINE_ITEM",
-            "CREATIVE"
+            "LINE_ITEM"
         ],
         "metrics": [
             "impressions", 
@@ -58,13 +57,12 @@ def create_dsp_report(**kwargs):
         # Extração bem-sucedida, mas relatório está sendo processado
         report_data = response.json()
         report_id = report_data.get("reportId")
-        kwargs['ti'].xcom_push(key='report_id', value=report_id)
         Variable.set("amazon_dsp_report_id", report_id)
         print(f"Relatório em processamento. Report ID: {report_id}")
     elif response.status_code == 200:
         # Caso excepcional, onde o relatório já está pronto
         report_data = response.json()
-        kwargs['ti'].xcom_push(key='dsp_report_data', value=report_data)
+        Variable.set("amazon_dsp_report_id", report_id)
         print("Relatório extraído com sucesso.")
     else:
         raise Exception(f"Erro ao extrair dados: {response.status_code} - {response.text}")
@@ -83,8 +81,8 @@ with DAG(
     "amazon_ads_dsp_create_report",
     default_args=default_args,
     description="DAG para extração de dados do Amazon DSP",
-    schedule_interval=None,  # Esta DAG é acionada manualmente ou por outra DAG
-    start_date=datetime(2023, 1, 1),
+    schedule_interval=None,  # Rodará diariamente às 6h da manhã
+    start_date=datetime(2024, 1, 1),
     catchup=False,
 ) as dag:
 

@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 import pandas as pd
 import json
 
-# Configurações gerais
 default_args = {
     "owner": "airflow",
     "depends_on_past": False,
@@ -15,24 +14,17 @@ default_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
-# Função de limpeza e transformação
 def clean_and_transform_data(**kwargs):
-    # Carregar os dados do XCom ou de um arquivo
     raw_data = Variable.get("dsp_report_data")
-
     data = json.loads(raw_data)
-
-    # Criar o DataFrame
     df = pd.DataFrame(data)
 
-    # Converter timestamps para datas legíveis
     df["date"] = pd.to_datetime(df["date"], unit="ms").dt.date
     df["orderStartDate"] = pd.to_datetime(df["orderStartDate"], unit="ms").dt.date
     df["orderEndDate"] = pd.to_datetime(df["orderEndDate"], unit="ms").dt.date
     df["lineItemStartDate"] = pd.to_datetime(df["lineItemStartDate"], unit="ms").dt.date
     df["lineItemEndDate"] = pd.to_datetime(df["lineItemEndDate"], unit="ms").dt.date
 
-    # Selecionar e renomear colunas de interesse
     selected_columns = {
         "date": "date",
         "advertiserId": "advertiserId",
@@ -62,15 +54,14 @@ def clean_and_transform_data(**kwargs):
         "totalAddToCart14d": "totalAddToCart14d"
     }
     df = df.rename(columns=selected_columns)[selected_columns.values()]
-    df_json = df.to_json(orient='records')  # Orientação 'records' garante uma lista de dicionários
+    df_json = df.to_json(orient='records') 
     Variable.set("dsp_report_df", df_json)
 
-# Configuração da DAG
 with DAG(
     "clean_transform_dsp_data",
     default_args=default_args,
     description="DAG para limpeza e transformação de dados do Amazon DSP",
-    schedule_interval=None,  # Acionada manualmente ou por outra DAG
+    schedule_interval=None, 
     start_date=datetime(2023, 1, 1),
     catchup=False,
 ) as dag:

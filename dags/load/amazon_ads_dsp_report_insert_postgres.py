@@ -16,10 +16,8 @@ def addapt_numpy_float64(numpy_float64):
 def addapt_numpy_int64(numpy_int64):
     return AsIs(numpy_int64)
 
-# Carregar variáveis de ambiente do arquivo .env
 load_dotenv()
 
-# Configurações gerais
 default_args = {
     "owner": "airflow",
     "depends_on_past": False,
@@ -29,7 +27,6 @@ default_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
-# Configuração do banco de dados a partir do .env
 DB_CONFIG = {
     "host": os.getenv("DB_ENDPOINT"),
     "database": os.getenv("DB_NAME"),
@@ -40,7 +37,6 @@ DB_CONFIG = {
 
 TABLE_NAME = "amazon_ads_dsp_report"
 
-# Função para criar a tabela caso não exista
 def create_table_if_not_exists():
     create_table_query = f"""
     CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
@@ -81,22 +77,17 @@ def create_table_if_not_exists():
     cursor.close()
     conn.close()
 
-# Função para inserir dados no PostgreSQL de forma incremental
 def insert_incremental(**kwargs):
     register_adapter(np.float64, addapt_numpy_float64)
     register_adapter(np.int64, addapt_numpy_int64)
-    # Carregar os dados da variável do Airflow
     raw_data = Variable.get("dsp_report_df")
     
-    # Decodificar o JSON
     try:
         report_data = json.loads(raw_data)
     except json.JSONDecodeError as e:
         raise ValueError(f"Erro ao decodificar JSON da variável: {e}")
     
-    # Verificar se o JSON decodificado é uma lista de dicionários
     if isinstance(report_data, list) and all(isinstance(item, dict) for item in report_data):
-        # Criar o DataFrame a partir de uma lista de dicionários
         df = pd.DataFrame(report_data)
     else:
         raise ValueError("O JSON não está no formato esperado: uma lista de dicionários.")
@@ -114,7 +105,6 @@ def insert_incremental(**kwargs):
     conn = psycopg2.connect(**DB_CONFIG)
     cursor = conn.cursor()
 
-    # Inserção incremental usando ON CONFLICT para evitar duplicatas
     insert_query = f"""
     INSERT INTO {TABLE_NAME} (
         date, advertiserId, advertiserName, campaignId, campaign, campaignBudget, campaignStartDate,
@@ -154,7 +144,6 @@ def insert_incremental(**kwargs):
     cursor.close()
     conn.close()
 
-# Configuração da DAG
 with DAG(
     "amazon_ads_dsp_to_rds",
     default_args=default_args,
