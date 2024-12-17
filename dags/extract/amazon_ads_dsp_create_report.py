@@ -32,7 +32,8 @@ def create_dsp_report(**kwargs):
         "type": "CAMPAIGN",
         "dimensions": [
             "ORDER",
-            "LINE_ITEM"
+            "LINE_ITEM",
+            "CREATIVE"
         ],
         "metrics": [
             "impressions", 
