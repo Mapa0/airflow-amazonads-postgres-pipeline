@@ -91,7 +91,7 @@ class AmazonAdsDspReportLoad:
             df[column] = df[column].astype(float if df[column].dtype == np.float64 else int)
             print(column)
 
-        conn = psycopg2.connect(self.DB_CONFIG)
+        conn = psycopg2.connect(**self.DB_CONFIG)
         cursor = conn.cursor()
 
         insert_query = f"""

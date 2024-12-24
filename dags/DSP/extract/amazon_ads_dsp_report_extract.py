@@ -104,7 +104,7 @@ class AmazonAdsDspReportExtract:
         raise Exception("Relatório não foi concluído dentro do número máximo de tentativas.")
     
     def download_report(self, **kwargs):
-        report_metadata = kwargs['ti'].xcom_pull(task_ids='check_report_status', key='dsp_report_metadata')
+        report_metadata = kwargs['ti'].xcom_pull(task_ids='get_dsp_report', key='dsp_report_metadata')
         
         if not report_metadata:
             raise Exception("Report Metadata invalid")
