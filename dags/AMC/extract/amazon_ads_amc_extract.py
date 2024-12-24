@@ -19,7 +19,7 @@ class AmazonAdsAmcExtract:
         CREATE_WORKFLOW_URL = f"{self.API_URL}/workflows"
         workflow_id = str(uuid.uuid4())
         
-        sql_query = kwargs['ti'].xcom_pull(task_ids='set_parameters', key='sql_query')
+        sql_query = kwargs['ti'].xcom_pull(task_ids='setup.set_parameters', key='sql_query')
 
         headers = {
         "Authorization": f"Bearer {self.ACCESS_TOKEN}",
@@ -49,9 +49,9 @@ class AmazonAdsAmcExtract:
     def create_workflow_execution(self, **kwargs):
         execution_endpoint = f"{self.API_URL}/workflowExecutions"
 
-        workflow_id = kwargs['ti'].xcom_pull(task_ids='create_amc_workflow', key='amc_workflow_id')
-        time_window_start = kwargs['ti'].xcom_pull(task_ids='set_parameters', key='timeWindowStart')
-        time_window_end = kwargs['ti'].xcom_pull(task_ids='set_parameters', key='timeWindowEnd')
+        workflow_id = kwargs['ti'].xcom_pull(task_ids='extract.create_amc_workflow', key='amc_workflow_id')
+        time_window_start = kwargs['ti'].xcom_pull(task_ids='setup.set_parameters', key='timeWindowStart')
+        time_window_end = kwargs['ti'].xcom_pull(task_ids='setup.set_parameters', key='timeWindowEnd')
 
         if not workflow_id:
             raise Exception("Workflow ID não encontrado. Certifique-se de que o workflow foi criado com sucesso.")
@@ -96,7 +96,7 @@ class AmazonAdsAmcExtract:
         }
 
         # Recupera o workflowExecutionId das XComs
-        workflow_execution_id = kwargs['ti'].xcom_pull(task_ids='create_amc_workflow_execution', key='workflowExecutionId')
+        workflow_execution_id = kwargs['ti'].xcom_pull(task_ids='extract.create_amc_workflow_execution', key='workflowExecutionId')
 
         if not workflow_execution_id:
             raise Exception("Workflow Execution ID não encontrado. Certifique-se de que a execução foi criada com sucesso.")
@@ -137,7 +137,7 @@ class AmazonAdsAmcExtract:
             "Accept": "application/vnd.amcworkflows.v1+json"
         }
 
-        workflow_execution_id = kwargs['ti'].xcom_pull(task_ids='create_amc_workflow_execution', key='workflowExecutionId')
+        workflow_execution_id = kwargs['ti'].xcom_pull(task_ids='extract.create_amc_workflow_execution', key='workflowExecutionId')
         if not workflow_execution_id:
             raise AirflowException("Workflow Execution ID não encontrado. Certifique-se de que a execução foi bem-sucedida.")
 
@@ -160,7 +160,7 @@ class AmazonAdsAmcExtract:
         
     def extract_csv_content(self, **kwargs):
         # Recuperar URLs de download das XComs
-        download_urls = kwargs['ti'].xcom_pull(task_ids='get_download_url', key='download_urls')
+        download_urls = kwargs['ti'].xcom_pull(task_ids='extract.get_download_url', key='download_urls')
 
         if not download_urls or len(download_urls) == 0:
             raise Exception("Nenhuma URL de download encontrada nas XComs.")

@@ -18,8 +18,8 @@ class AmazonAdsAmcLoad:
             'port': os.getenv('DB_PORT'),
         }
 
-        df_records = kwargs['ti'].xcom_pull(task_ids='transform_csv_to_dataframe', key='csv_dataframe')
-        table_name = kwargs['ti'].xcom_pull(task_ids='set_parameters', key='table_name')
+        df_records = kwargs['ti'].xcom_pull(task_ids='transform.transform_csv_to_dataframe', key='csv_dataframe')
+        table_name = kwargs['ti'].xcom_pull(task_ids='setup.set_parameters', key='table_name')
 
         if not df_records or not table_name:
             raise Exception("DataFrame ou nome da tabela não encontrado no XCom.")

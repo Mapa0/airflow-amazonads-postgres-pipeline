@@ -7,8 +7,8 @@ from dags.AMC.extract.amazon_ads_amc_extract import AmazonAdsAmcExtract
 from dags.AMC.transform.amazon_ads_amc_transform import AmazonAdsAmcTransform
 from dags.AMC.load.amazon_ads_amc_load import AmazonAdsAmcLoad
 from include.parameters import Parameters
-
 from include.queries import Query
+from airflow.utils.task_group import TaskGroup
 
 
 load_dotenv()
@@ -34,64 +34,66 @@ with DAG(
     catchup=False,
 ) as dag:
 
-    set_params_task = PythonOperator(
-        task_id="set_parameters",
-        python_callable=Parameters.set_parameters,
-        op_kwargs={
-            "days_offset": 14,  # End date será ontem
-            "analysis_window": 30,  # Start date será 7 dias antes do end date
-            "query": Query.cap,
-            "table_name": "amc_campaign_cap",
-        },
-    )
+    # TaskGroup: Setup
+    with TaskGroup("setup", tooltip="Configuração de parâmetros e autenticação") as setup:
+        set_params_task = PythonOperator(
+            task_id="set_parameters",
+            python_callable=Parameters.set_parameters,
+            op_kwargs={
+                "days_offset": 14,  # End date será ontem
+                "analysis_window": 30,  # Start date será 7 dias antes do end date
+                "query": Query.cap,
+                "table_name": "amc_campaign_cap",
+            },
+        )
 
-    authenticate_task = TriggerDagRunOperator(
-        task_id="trigger_authentication_dag",
-        trigger_dag_id="amazon_ads_authentication",
-        wait_for_completion=True, 
-        conf={"message": "Iniciando autenticação"},
-    )
+        authenticate_task = TriggerDagRunOperator(
+            task_id="trigger_authentication_dag",
+            trigger_dag_id="amazon_ads_authentication",
+            wait_for_completion=True, 
+            conf={"message": "Iniciando autenticação"},
+        )
 
-    amazon_amc_create_workflow_task = PythonOperator(
-        task_id="create_amc_workflow",
-        python_callable=amc_extract.create_amc_workflow,
-        provide_context=True
-    )
+        set_params_task >> authenticate_task
 
-    amazon_amc_create_workflow_execution_task = PythonOperator(
-        task_id="create_amc_workflow_execution",
-        python_callable=amc_extract.create_workflow_execution,
-        provide_context=True
-    )
+    with TaskGroup("extract", tooltip="Extração de dados da campanha") as extract:
+        create_workflow_task = PythonOperator(
+            task_id="create_amc_workflow",
+            python_callable=amc_extract.create_amc_workflow,
+        )
 
-    amazon_amc_monitor_workflow_execution_task = PythonOperator(
-        task_id="monitor_amc_workflow_execution",
-        python_callable=amc_extract.monitor_workflow_execution,
-        provide_context=True
-    )
+        create_workflow_execution_task = PythonOperator(
+            task_id="create_amc_workflow_execution",
+            python_callable=amc_extract.create_workflow_execution,
+        )
 
-    amazon_amc_get_download_url_task = PythonOperator(
-        task_id="get_download_url",
-        python_callable=amc_extract.get_download_url,
-        provide_context=True
-    )
+        monitor_workflow_execution_task = PythonOperator(
+            task_id="monitor_amc_workflow_execution",
+            python_callable=amc_extract.monitor_workflow_execution,
+        )
 
-    amazon_amc_extract_csv_content = PythonOperator(
-        task_id="extract_csv_content",
-        python_callable=amc_extract.extract_csv_content,
-        provide_context=True
-    )
+        get_download_url_task = PythonOperator(
+            task_id="get_download_url",
+            python_callable=amc_extract.get_download_url,
+        )
 
-    amazon_amc_transform_csv_to_dataframe_task = PythonOperator(
-        task_id="transform_csv_to_dataframe",
-        python_callable=amc_transform.transform_csv_to_dataframe,
-        provide_context=True
-    )
+        extract_csv_content_task = PythonOperator(
+            task_id="extract_csv_content",
+            python_callable=amc_extract.extract_csv_content,
+        )
 
-    amazon_amc_insert_data_incrementally_task = PythonOperator(
-        task_id="insert_data_incrementally",
-        python_callable=amc_load.insert_data_incrementally_auto,
-        provide_context=True
-    )
+        create_workflow_task >> create_workflow_execution_task >> monitor_workflow_execution_task >> get_download_url_task >> extract_csv_content_task
 
-    set_params_task >> authenticate_task >> amazon_amc_create_workflow_task >> amazon_amc_create_workflow_execution_task >> amazon_amc_monitor_workflow_execution_task >> amazon_amc_get_download_url_task >> amazon_amc_extract_csv_content >> amazon_amc_transform_csv_to_dataframe_task >> amazon_amc_insert_data_incrementally_task
+    with TaskGroup("transform", tooltip="Transformação dos dados extraídos") as transform:
+        transform_csv_to_dataframe_task = PythonOperator(
+            task_id="transform_csv_to_dataframe",
+            python_callable=amc_transform.transform_csv_to_dataframe,
+        )
+
+    with TaskGroup("load", tooltip="Carregamento dos dados transformados") as load:
+        insert_data_incrementally_task = PythonOperator(
+            task_id="insert_data_incrementally",
+            python_callable=amc_load.insert_data_incrementally_auto,
+        )
+
+    setup >> extract >> transform >> load

@@ -6,7 +6,7 @@ class AmazonAdsDspReportTransform:
         pass
 
     def clean_and_transform_data(self, **kwargs):
-        raw_data = kwargs['ti'].xcom_pull(task_ids='download_report', key='dsp_report_data')
+        raw_data = kwargs['ti'].xcom_pull(task_ids='transform.download_report', key='dsp_report_data')
         data = json.loads(raw_data)
         df = pd.DataFrame(data)
 

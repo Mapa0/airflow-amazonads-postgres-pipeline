@@ -70,7 +70,7 @@ class AmazonAdsDspReportLoad:
     def insert_incremental(self, **kwargs):
         register_adapter(np.float64, addapt_numpy_float64)
         register_adapter(np.int64, addapt_numpy_int64)
-        raw_data = kwargs['ti'].xcom_pull(task_ids='clean_transform_data', key='dsp_report_df')
+        raw_data = kwargs['ti'].xcom_pull(task_ids='transform.clean_transform_data', key='dsp_report_df')
         try:
             report_data = json.loads(raw_data)
         except json.JSONDecodeError as e:

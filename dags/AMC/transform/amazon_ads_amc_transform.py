@@ -8,7 +8,7 @@ class AmazonAdsAmcTransform:
 
     def transform_csv_to_dataframe(self, **kwargs):
         # Recuperar o conteúdo bruto do CSV das XComs
-        csv_content = kwargs['ti'].xcom_pull(task_ids='extract_csv_content', key='raw_csv_content')
+        csv_content = kwargs['ti'].xcom_pull(task_ids='extract.extract_csv_content', key='raw_csv_content')
 
         if not csv_content:
             raise Exception("Conteúdo bruto do CSV não encontrado nas XComs.")
@@ -32,8 +32,8 @@ class AmazonAdsAmcTransform:
 
         # Adicionar colunas de contexto
         execution_date = kwargs['execution_date'].strftime('%Y-%m-%d')
-        time_window_start = kwargs['ti'].xcom_pull(task_ids='set_parameters', key='timeWindowStart')
-        time_window_end = kwargs['ti'].xcom_pull(task_ids='set_parameters', key='timeWindowEnd')
+        time_window_start = kwargs['ti'].xcom_pull(task_ids='setup.set_parameters', key='timeWindowStart')
+        time_window_end = kwargs['ti'].xcom_pull(task_ids='setup.set_parameters', key='timeWindowEnd')
 
         if not time_window_start or not time_window_end:
             raise Exception("Time Window Start ou End não encontrado nas XComs.")

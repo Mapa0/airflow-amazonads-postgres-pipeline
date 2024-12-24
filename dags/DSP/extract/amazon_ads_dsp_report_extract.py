@@ -66,7 +66,7 @@ class AmazonAdsDspReportExtract:
             raise Exception(f"Erro ao extrair dados: {response.status_code} - {response.text}")
 
     def check_report_status(self,**kwargs):
-        report_id = kwargs['ti'].xcom_pull(task_ids='create_dsp_report', key='amazon_dsp_report_id')
+        report_id = kwargs['ti'].xcom_pull(task_ids='extract.create_dsp_report', key='amazon_dsp_report_id')
         if not report_id: 
             raise Exception("Report ID não encontrado nas XComs.")
 
@@ -104,7 +104,7 @@ class AmazonAdsDspReportExtract:
         raise Exception("Relatório não foi concluído dentro do número máximo de tentativas.")
     
     def download_report(self, **kwargs):
-        report_metadata = kwargs['ti'].xcom_pull(task_ids='get_dsp_report', key='dsp_report_metadata')
+        report_metadata = kwargs['ti'].xcom_pull(task_ids='extract.get_dsp_report', key='dsp_report_metadata')
         
         if not report_metadata:
             raise Exception("Report Metadata invalid")
