@@ -1,2 +1,4 @@
+airflow:
+    expose_port: "true"
 project:
-    name: airflow-amazonads-gsheets-pipeline
+    name: airflow-amazonads-postgres-pipeline

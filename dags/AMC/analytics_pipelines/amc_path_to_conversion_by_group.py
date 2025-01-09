@@ -26,9 +26,9 @@ default_args = {
 }
 
 with DAG(
-    "amc_campaign_cap",
+    "amc_path_to_conversion_by_group",
     default_args=default_args,
-    description="DAG responsável pela análise CAP de campanhas",
+    description="DAG responsável pela análise de jornada de conversão por grupo",
     schedule_interval=timedelta(days=30),
     start_date=datetime(2024, 1, 1),
     catchup=False,
@@ -41,9 +41,9 @@ with DAG(
             python_callable=Parameters.set_parameters,
             op_kwargs={
                 "days_offset": 14,  # End date será ontem
-                "analysis_window": 30,  # Start date será 7 dias antes do end date
-                "query": Query.cap,
-                "table_name": "amc_campaign_cap",
+                "analysis_window": 45,  # Start date será 7 dias antes do end date
+                "query": Query.amc_path_to_conversion_by_group,
+                "table_name": "amc_path_to_conversion_by_group",
             },
         )
 

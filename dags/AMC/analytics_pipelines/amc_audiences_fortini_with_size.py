@@ -26,10 +26,10 @@ default_args = {
 }
 
 with DAG(
-    "amc_campaign_cap",
+    "amc_audiences_fortini_with_size",
     default_args=default_args,
-    description="DAG responsável pela análise CAP de campanhas",
-    schedule_interval=timedelta(days=30),
+    description="DAG responsável pela análise de audiências que compraram produtos fortini e o tamanho da respectiva audiencia",
+    schedule_interval=timedelta(days=7),
     start_date=datetime(2024, 1, 1),
     catchup=False,
 ) as dag:
@@ -42,8 +42,8 @@ with DAG(
             op_kwargs={
                 "days_offset": 14,  # End date será ontem
                 "analysis_window": 30,  # Start date será 7 dias antes do end date
-                "query": Query.cap,
-                "table_name": "amc_campaign_cap",
+                "query": Query.amc_audiences_fortini_with_size,
+                "table_name": "amc_audiences_fortini_with_size",
             },
         )
 

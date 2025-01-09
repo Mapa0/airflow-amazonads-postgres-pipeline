@@ -2,11 +2,26 @@ import os
 import pandas as pd
 import psycopg2
 from psycopg2.extras import execute_values
+from psycopg2.extensions import register_adapter, AsIs
+import numpy as np
 
 class AmazonAdsAmcLoad:
 
     def __init__(self):
-        pass
+        # Registrar o adapter para pd.NA
+        register_adapter(type(pd.NA), self.adapt_pd_NA)
+        # Registrar adaptadores para tipos NumPy, se necessário
+        register_adapter(np.float64, self.adapt_numpy_float64)
+        register_adapter(np.int64, self.adapt_numpy_int64)
+
+    def adapt_pd_NA(self, val):
+        return AsIs('NULL')
+
+    def adapt_numpy_float64(self, val):
+        return float(val)
+
+    def adapt_numpy_int64(self, val):
+        return int(val)
 
     def insert_data_incrementally_auto(self, **kwargs):
 
@@ -27,7 +42,7 @@ class AmazonAdsAmcLoad:
         # Recria o DataFrame a partir da lista de dicionários
         df = pd.DataFrame(df_records)
 
-        # Caso queira forçar conversão de tipos mais precisos
+        # Forçar conversão de tipos mais precisos
         df = df.convert_dtypes()
 
         # Mapeamento de dtypes do Pandas para tipos do PostgreSQL
